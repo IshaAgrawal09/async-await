@@ -4,6 +4,9 @@ import {
   Card,
   TextField,
   SkeletonBodyText,
+  Page,
+  Stack,
+  FormLayout,
 } from "@shopify/polaris";
 import { useState, useEffect } from "react";
 import useFetch from "./useFetch";
@@ -64,25 +67,28 @@ const Main = () => {
 
   useEffect(() => {
     if (child === "true") {
-      setLoading(true);
-      fetch1()
-        .then((actualData) => {
-          let temp = [];
+      (async () => {
+        setLoading(true);
+        await fetch1()
+          .then((actualData) => {
+            let temp = [];
 
-          actualData.data.forEach((item, index) => {
-            temp.push({
-              key: index,
-              label: item.name,
-              value: JSON.stringify(item.parent_id),
-              parentid: item.parent_id,
-              haschildren: item.hasChildren.toString(),
+            actualData.data.forEach((item, index) => {
+              temp.push({
+                key: index,
+                label: item.name,
+                value: JSON.stringify(item.parent_id),
+                parentid: item.parent_id,
+                haschildren: item.hasChildren.toString(),
+              });
             });
+            setCategory([...category, [...temp]]);
+          })
+          .finally(() => {
+            // setLoading(false);
           });
-          setCategory([...category, [...temp]]);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+        setLoading(false);
+      })();
     } else {
       setLoadAttr(true);
       fetch2()
@@ -179,82 +185,89 @@ const Main = () => {
   // JSX
   return (
     <>
-      <div className="mainDiv">
-        <p className="category">Category</p>
-
-        {category.map((item, index) => {
-          return (
-            <div className="mainSelectCat">
-              <Card sectioned>
-                <Select
-                  placeholder="--select--"
-                  key={index}
-                  options={category[index]}
-                  onChange={(value) => handleSelectChange(value, index)}
-                  value={containValue[index]}
-                />
-              </Card>
-            </div>
-          );
-        })}
-        {loading ? (
-          <Card sectioned>
-            <SkeletonBodyText />
-          </Card>
-        ) : null}
-      </div>
-      {modal ? (
-        <div className="selectMain">
-          <h3>Add Attribute</h3>
-
-          {count.map((item, index) => {
-            return (
-              <div className="selectOption">
+      <Page>
+        <Page>
+          <Card sectioned title="Category">
+            {/* <Card sectioned> */}
+            {category.map((item, index) => {
+              return (
                 <Card sectioned>
-                  <div className="deleteBtn">
-                    <Button plain primary onClick={() => remove(index)}>
-                      DELETE
-                    </Button>
-                  </div>
-                  <div className="selectFlex">
-                    <div className="option">
-                      <Select
-                        placeholder="--select--"
-                        // disabled={attribute?.[index]?.disabled}
-                        key={index}
-                        options={attribute}
-                        onChange={(value) => {
-                          handleAttribute(value, index);
-                        }}
-                        value={attrVal?.[index]?.val}
-                      />
-                    </div>
-                    <div className="option">
-                      <TextField
-                        placeholder="type Something.."
-                        onChange={() => {}}
-                        autoComplete="off"
-                      />
-                    </div>
-                  </div>
+                  <FormLayout>
+                    <Select
+                      placeholder="--select--"
+                      Label="Choose Category"
+                      key={index}
+                      options={category[index]}
+                      onChange={(value) => handleSelectChange(value, index)}
+                      value={containValue[index]}
+                    />
+                  </FormLayout>
                 </Card>
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
+              );
+            })}
+            {/* </Card> */}
+            {loading ? (
+              <Card sectioned>
+                <SkeletonBodyText lines={2} />
+              </Card>
+            ) : null}
+          </Card>
+        </Page>
 
-      {add ? (
-        <div className="btn">
-          {loadAttr ? (
-            <Button loading>Add Attributes</Button>
-          ) : (
-            <Button primary onClick={fetchAttribute}>
-              Add Attributes
-            </Button>
-          )}
-        </div>
-      ) : null}
+        {modal ? (
+          <div className="selectMain">
+            <Page>
+              <Card sectioned title="Add Attribute">
+                {count.map((item, index) => {
+                  return (
+                    <div className="selectOption">
+                      <Card sectioned>
+                        <Button plain destructive onClick={() => remove(index)}>
+                          DELETE
+                        </Button>
+
+                        <Stack vertical spacing="extraTight">
+                          <FormLayout>
+                            <FormLayout.Group condensed>
+                              <Select
+                                placeholder="--select--"
+                                // disabled={attribute?.[index]?.disabled}
+                                key={index}
+                                options={attribute}
+                                onChange={(value) => {
+                                  handleAttribute(value, index);
+                                }}
+                                value={attrVal?.[index]?.val}
+                              />
+
+                              <TextField
+                                placeholder="type Something.."
+                                onChange={() => {}}
+                                autoComplete="off"
+                              />
+                            </FormLayout.Group>
+                          </FormLayout>
+                        </Stack>
+                      </Card>
+                    </div>
+                  );
+                })}
+              </Card>
+            </Page>
+          </div>
+        ) : null}
+        {add ? (
+          <div className="btn">
+            {loadAttr ? (
+              <Button loading>Add Attributes</Button>
+            ) : (
+              <Button primary onClick={fetchAttribute}>
+                Add Attributes
+              </Button>
+            )}
+          </div>
+        ) : null}
+      </Page>
     </>
   );
 };
